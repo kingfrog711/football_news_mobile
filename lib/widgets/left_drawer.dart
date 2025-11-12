@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:football_news/screens/menu.dart';
+import 'package:football_news/screens/news_entry_list.dart';
+import 'package:football_news/screens/newslist_form.dart';
+
 
 class LeftDrawer extends StatelessWidget {
   const LeftDrawer({super.key});
@@ -50,12 +53,26 @@ class LeftDrawer extends StatelessWidget {
             title: const Text('Add News'),
             // Redirect to NewsFormPage
             onTap: () {
-              /*
-              TODO: Add routing to NewsFormPage here
-              once the page is created.
-              */
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const NewsFormPage(),
+                ),
+              );
             },
           ),
+          ListTile(
+            leading: const Icon(Icons.newspaper),
+            title: const Text('See News'),
+            onTap: () {
+              // Route to news list page
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const NewsEntryListPage()),
+              );
+            },
+          ),
+          
         ],
       ),
     );

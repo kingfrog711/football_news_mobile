@@ -1,5 +1,10 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+import 'package:football_news/screens/menu.dart';
 import 'package:football_news/widgets/left_drawer.dart';
+import 'package:pbp_django_auth/pbp_django_auth.dart';
+import 'package:provider/provider.dart';
 
 class NewsFormPage extends StatefulWidget {
   const NewsFormPage({super.key});
@@ -28,6 +33,8 @@ class _NewsFormPageState extends State<NewsFormPage> {
 
   @override
   Widget build(BuildContext context) {
+    final request = context.watch<CookieRequest>();
+
     return Scaffold(
       appBar: AppBar(
         title: const Center(
@@ -165,36 +172,62 @@ class _NewsFormPageState extends State<NewsFormPage> {
                       backgroundColor:
                       MaterialStateProperty.all(Colors.indigo),
                     ),
-                    onPressed: () {
-                      if (_formKey.currentState!.validate()) {
-                        showDialog(
-                          context: context,
-                          builder: (context) {
-                            return AlertDialog(
-                              title:
-                              const Text('Produk berhasil tersimpan'),
-                              content: SingleChildScrollView(
-                                child: Column(
-                                  crossAxisAlignment:
-                                  CrossAxisAlignment.start,
-                                  children: [
-                                    Text('Judul: $_title'),
-                                    Text('Konten: $_content'),
-                                    Text('Thumbnail: $_thumbnail'),
-                                  ],
-                                ),
+                    onPressed: () async {
+                      if (!_formKey.currentState!.validate()) return;
+
+                      try {
+                        final response = await request.postJson(
+                          // TODO: Replace with your backend URL and keep the trailing slash.
+                          "http://localhost:8000/create-news-ajax/",
+                          jsonEncode(<String, dynamic>{
+                            "title": _title,
+                            "content": _content,
+                            "category": _category,
+                            "thumbnail": _thumbnail,
+                            "is_featured": _isFeatured,
+                          }),
+                        );
+
+                        if (!context.mounted) return;
+
+                        if (response['status'] == 'success') {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text("News successfully saved!"),
+                            ),
+                          );
+
+                          _formKey.currentState!.reset();
+                          setState(() {
+                            _title = "";
+                            _content = "";
+                            _category = "update";
+                            _thumbnail = "";
+                            _isFeatured = false;
+                          });
+
+                          Navigator.pushReplacement(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => MyHomePage(),
+                            ),
+                          );
+                        } else {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                response['message'] ??
+                                    "Something went wrong, please try again.",
                               ),
-                              actions: [
-                                TextButton(
-                                  child: const Text('OK'),
-                                  onPressed: () {
-                                    Navigator.pop(context);
-                                    _formKey.currentState!.reset();
-                                  },
-                                ),
-                              ],
-                            );
-                          },
+                            ),
+                          );
+                        }
+                      } catch (e) {
+                        if (!context.mounted) return;
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('Error: ${e.toString()}'),
+                          ),
                         );
                       }
                     },
